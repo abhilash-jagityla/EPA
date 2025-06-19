@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-6">Extracted Data from {{ results.filename }}</h2>
+
+        <!-- Extracted Fields -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">Extracted Fields</h3>
+            <div class="grid grid-cols-1 gap-4">
+                {% for field, value in results.fields.items() %}
+                <div class="border rounded p-4">
+                    <div class="font-medium text-gray-700">{{ field|replace('_', ' ')|title }}</div>
+                    <div class="text-gray-900">{{ value if value else 'Not found' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div class="mt-6">
+            <h3 class="text-xl font-semibold mb-4">Download Results</h3>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('download_file', filename=results.csv_path) }}" 
+                   class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    Download CSV
+                </a>
+                <a href="{{ url_for('dashboard') }}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                    Process Another PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

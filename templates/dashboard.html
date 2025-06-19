@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h2 class="text-2xl font-bold mb-6">PDF Field Extractor</h2>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Upload Form -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">Upload PDFs</h3>
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" 
+                  class="space-y-4">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <input type="file" name="files[]" id="files" accept=".pdf" multiple
+                           class="hidden" onchange="updateFileList(this)">
+                    <label for="files" class="cursor-pointer">
+                        <div class="text-gray-600">
+                            <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-lg" id="fileLabel">
+                                Drag and drop your PDFs here or click to browse
+                            </p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Selected Files List -->
+                <div id="fileList" class="hidden mt-4">
+                    <h4 class="text-lg font-semibold mb-2">Selected Files:</h4>
+                    <ul id="selectedFiles" class="space-y-2 max-h-40 overflow-y-auto"></ul>
+                </div>
+                
+                <div class="flex justify-center">
+                    <button type="submit" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">
+                        Extract Fields
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 bg-gray-50 rounded-lg p-6">
+            <h3 class="text-xl font-semibold mb-4">Instructions</h3>
+            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>Upload one or multiple PDF documents containing business information</li>
+                <li>The system will automatically extract the following fields from each PDF:
+                    <ul class="list-disc list-inside ml-4 mt-2">
+                        <li>Company Name</li>
+                        <li>Document Number</li>
+                        <li>Sold to Party</li>
+                        <li>Reference Number</li>
+                        <li>Total Net Value</li>
+                        <li>VAT Amount</li>
+                        <li>Total Due</li>
+                    </ul>
+                </li>
+                <li>Results will be combined and available for download in Excel format</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateFileList(input) {
+    const fileList = document.getElementById('fileList');
+    const selectedFiles = document.getElementById('selectedFiles');
+    const label = document.getElementById('fileLabel');
+    
+    // Clear previous list
+    selectedFiles.innerHTML = '';
+    
+    if (input.files && input.files.length > 0) {
+        fileList.classList.remove('hidden');
+        label.textContent = `${input.files.length} file(s) selected`;
+        
+        Array.from(input.files).forEach((file, index) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
+            li.innerHTML = `
+                <span class="truncate">${file.name}</span>
+                <span class="text-sm text-gray-500">${(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+            `;
+            selectedFiles.appendChild(li);
+        });
+    } else {
+        fileList.classList.add('hidden');
+        label.textContent = 'Drag and drop your PDFs here or click to browse';
+    }
+}
+
+// Enable drag and drop
+const dropZone = document.querySelector('form');
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults (e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    dropZone.classList.add('border-blue-500');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('border-blue-500');
+}
+
+dropZone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    const fileInput = document.querySelector('input[type="file"]');
+    fileInput.files = files;
+    updateFileList(fileInput);
+}
+</script>
+{% endblock %} 

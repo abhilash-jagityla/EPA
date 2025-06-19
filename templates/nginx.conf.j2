@@ -1,0 +1,20 @@
+server {
+    listen 80;
+    server_name {{ server_name }};
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:{{ app_dir }}/pdf_extractor.sock;
+    }
+
+    location /static {
+        alias {{ app_dir }}/static;
+    }
+
+    location /uploads {
+        internal;
+        alias {{ app_dir }}/uploads;
+    }
+
+    client_max_body_size 16M;
+} 

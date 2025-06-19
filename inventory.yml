@@ -1,0 +1,10 @@
+all:
+  children:
+    pdf_extractor_servers:
+      hosts:
+        pdf_extractor_prod:
+          ansible_host: your_server_ip
+          ansible_user: your_ssh_user
+          server_name: your_domain_name
+          repository_url: your_repository_url
+          secret_key: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}" 
