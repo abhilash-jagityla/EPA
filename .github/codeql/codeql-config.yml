@@ -1,0 +1,26 @@
+name: "PDF Extractor CodeQL Config"
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+
+paths:
+  - app
+  - config
+exclude:
+  - '**/tests'
+  - '**/venv'
+  - '**/*.test.py'
+
+query-filters:
+  - exclude:
+      problem.severity:
+        - note
+        - warning
+
+paths-ignore:
+  - node_modules
+  - '**/*.test.js'
+  - '**/*.spec.js'
+  - '**/vendor/'
+  - '**/third-party/' 
