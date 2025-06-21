@@ -1,3 +1,4 @@
+HEAD
 name: Run Pytest
 
 on: [push, pull_request]
@@ -21,3 +22,26 @@ jobs:
       - name: Run tests
         run: |
           pytest
+
+name: Test Self-Hosted Runner
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Print hostname
+        run: hostname
+
+      - name: Show user
+        run: whoami
+
+      - name: Python Version
+        run: python3 --version
+>>>>>>> 9f97759 (Add GitHub Actions test runner workflow)

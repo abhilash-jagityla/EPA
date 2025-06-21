@@ -33,8 +33,8 @@ sudo usermod -aG sudo webapps
 1. Switch to the webapps user and clone the repository:
 ```bash
 sudo su - webapps
-git clone <repository-url> /home/webapps/pdf-extractor
-cd /home/webapps/pdf-extractor
+git clone <repository-url> /home/webapps/EPA
+cd /home/webapps/EPA
 ```
 
 2. Create and activate virtual environment:
@@ -51,8 +51,8 @@ pip install gunicorn  # Production web server
 
 4. Create production configuration:
 ```bash
-sudo mkdir -p /etc/pdf-extractor
-sudo nano /etc/pdf-extractor/config.py
+sudo mkdir -p /etc/EPA
+sudo nano /etc/EPA/config.py
 ```
 
 Add the following content (replace with your values):
@@ -73,34 +73,34 @@ class Config:
     
     # Upload settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
-    UPLOAD_FOLDER = '/home/webapps/pdf-extractor/uploads'
+    UPLOAD_FOLDER = '/home/webapps/EPA/uploads'
 ```
 
 5. Create required directories:
 ```bash
-mkdir -p /home/webapps/pdf-extractor/uploads
-mkdir -p /home/webapps/pdf-extractor/logs
+mkdir -p /home/webapps/EPA/uploads
+mkdir -p /home/webapps/EPA/logs
 ```
 
 ## Gunicorn Setup
 
 1. Create Gunicorn configuration:
 ```bash
-sudo nano /etc/pdf-extractor/gunicorn.conf.py
+sudo nano /etc/EPA/gunicorn.conf.py
 ```
 
 Add the following content:
 ```python
 import multiprocessing
 
-bind = "unix:/home/webapps/pdf-extractor/pdf-extractor.sock"
+bind = "unix:/home/webapps/EPA/EPA.sock"
 workers = multiprocessing.cpu_count() * 2 + 1
 worker_class = "sync"
 worker_connections = 1000
 timeout = 30
 keepalive = 2
-errorlog = "/home/webapps/pdf-extractor/logs/gunicorn-error.log"
-accesslog = "/home/webapps/pdf-extractor/logs/gunicorn-access.log"
+errorlog = "/home/webapps/EPA/logs/gunicorn-error.log"
+accesslog = "/home/webapps/EPA/logs/gunicorn-access.log"
 loglevel = "info"
 ```
 
@@ -108,33 +108,33 @@ loglevel = "info"
 
 1. Create supervisor configuration:
 ```bash
-sudo nano /etc/supervisor/conf.d/pdf-extractor.conf
+sudo vi /etc/supervisor/conf.d/EPA.conf
 ```
 
 Add the following content:
 ```ini
-[program:pdf-extractor]
-directory=/home/webapps/pdf-extractor
-command=/home/webapps/pdf-extractor/venv/bin/gunicorn -c /etc/pdf-extractor/gunicorn.conf.py app:app
+[program:EPA]
+directory=/home/webapps/EPA
+command=/home/webapps/EPA/venv/bin/gunicorn -c /etc/EPA/gunicorn.conf.py app:app
 user=webapps
 autostart=true
 autorestart=true
-stderr_logfile=/home/webapps/pdf-extractor/logs/supervisor-err.log
-stdout_logfile=/home/webapps/pdf-extractor/logs/supervisor-out.log
-environment=PATH="/home/webapps/pdf-extractor/venv/bin"
+stderr_logfile=/home/webapps/EPA/logs/supervisor-err.log
+stdout_logfile=/home/webapps/EPA/logs/supervisor-out.log
+environment=PATH="/home/webapps/EPA/venv/bin"
 ```
 
 2. Update supervisor:
 ```bash
 sudo supervisorctl reread
-sudo supervisorctl update
+sudo supervisorctl updated
 ```
 
 ## Nginx Configuration
 
 1. Create Nginx configuration:
 ```bash
-sudo nano /etc/nginx/sites-available/pdf-extractor
+sudo vi /etc/nginx/sites-available/EPA
 ```
 
 Add the following content:
@@ -143,11 +143,11 @@ server {
     listen 80;
     server_name your-domain.com;  # Replace with your domain
 
-    access_log /home/webapps/pdf-extractor/logs/nginx-access.log;
-    error_log /home/webapps/pdf-extractor/logs/nginx-error.log;
+    access_log /home/webapps/EPA/logs/nginx-access.log;
+    error_log /home/webapps/EPA/logs/nginx-error.log;
 
     location / {
-        proxy_pass http://unix:/home/webapps/pdf-extractor/pdf-extractor.sock;
+        proxy_pass http://unix:/home/webapps/EPA/EPA.sock;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -160,7 +160,7 @@ server {
     }
 
     location /static {
-        alias /home/webapps/pdf-extractor/static;
+        alias /home/webapps/EPA/static;
         expires 30d;
     }
 }
@@ -168,7 +168,7 @@ server {
 
 2. Enable the site:
 ```bash
-sudo ln -s /etc/nginx/sites-available/pdf-extractor /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/EPA /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default  # Remove default site
 sudo nginx -t  # Test configuration
 sudo systemctl restart nginx
@@ -190,57 +190,57 @@ sudo certbot --nginx -d your-domain.com
 
 1. Set proper permissions:
 ```bash
-sudo chown -R webapps:webapps /home/webapps/pdf-extractor
-sudo chmod -R 755 /home/webapps/pdf-extractor
+sudo chown -R webapps:webapps /home/webapps/EPA
+sudo chmod -R 755 /home/webapps/EPA
 ```
 
 2. Start the application:
 ```bash
-sudo supervisorctl start pdf-extractor
+sudo supervisorctl start EPA
 ```
 
 ## Monitoring and Maintenance
 
 ### Check Application Status
 ```bash
-sudo supervisorctl status pdf-extractor
+sudo supervisorctl status EPA
 ```
 
 ### View Logs
 ```bash
 # Application logs
-tail -f /home/webapps/pdf-extractor/logs/supervisor-out.log
-tail -f /home/webapps/pdf-extractor/logs/supervisor-err.log
+tail -f /home/webapps/EPA/logs/supervisor-out.log
+tail -f /home/webapps/EPA/logs/supervisor-err.log
 
 # Nginx logs
-tail -f /home/webapps/pdf-extractor/logs/nginx-access.log
-tail -f /home/webapps/pdf-extractor/logs/nginx-error.log
+tail -f /home/webapps/EPA/logs/nginx-access.log
+tail -f /home/webapps/EPA/logs/nginx-error.log
 ```
 
 ### Restart Application
 ```bash
-sudo supervisorctl restart pdf-extractor
+sudo supervisorctl restart EPA
 ```
 
 ### Update Application
 ```bash
-cd /home/webapps/pdf-extractor
+cd /home/webapps/EPA
 source venv/bin/activate
 git pull
 pip install -r requirements.txt
-sudo supervisorctl restart pdf-extractor
+sudo supervisorctl restart EPA
 ```
 
 ## Backup
 
 1. Database backup (if using SQLite):
 ```bash
-cp /home/webapps/pdf-extractor/app.db /home/webapps/backups/app.db.$(date +%Y%m%d)
+cp /home/webapps/EPA/app.db /home/webapps/backups/app.db.$(date +%Y%m%d)
 ```
 
 2. Configuration backup:
 ```bash
-sudo cp -r /etc/pdf-extractor /home/webapps/backups/config.$(date +%Y%m%d)
+sudo cp -r /etc/EPA /home/webapps/backups/config.$(date +%Y%m%d)
 ```
 
 ## Security Recommendations
@@ -269,24 +269,24 @@ sudo apt upgrade
 
 1. If the application fails to start:
 ```bash
-sudo supervisorctl status pdf-extractor
-tail -f /home/webapps/pdf-extractor/logs/supervisor-err.log
+sudo supervisorctl status EPA
+tail -f /home/webapps/EPA/logs/supervisor-err.log
 ```
 
 2. If Nginx returns 502 Bad Gateway:
 ```bash
-tail -f /home/webapps/pdf-extractor/logs/gunicorn-error.log
+tail -f /home/webapps/EPA/logs/gunicorn-error.log
 sudo nginx -t
 ```
 
 3. Check permissions:
 ```bash
-ls -la /home/webapps/pdf-extractor
-ls -la /home/webapps/pdf-extractor/pdf-extractor.sock
+ls -la /home/webapps/EPA
+ls -la /home/webapps/EPA/EPA.sock
 ```
 
 4. Restart all services:
 ```bash
-sudo supervisorctl restart pdf-extractor
+sudo supervisorctl restart EPA
 sudo systemctl restart nginx
 ``` 
