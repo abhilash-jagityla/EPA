@@ -17,3 +17,4 @@ SQLAlchemy==1.4.23
 xlsxwriter==3.1.2
 openpyxl==3.1.2
 waitress==2.0.0
+flask-migrate
