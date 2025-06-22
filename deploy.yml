@@ -1,0 +1,113 @@
+---
+- name: Deploy PDF Extractor Application
+  hosts: pdf_extractor_servers
+  become: yes
+  vars:
+    app_dir: /opt/pdf-extractor
+    venv_dir: "{{ app_dir }}/venv"
+    app_user: pdf_extractor
+    app_group: pdf_extractor
+    python_version: python3.9
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required system packages
+      apt:
+        name:
+          - python3.9
+          - python3.9-venv
+          - python3-pip
+          - git
+          - nginx
+        state: present
+
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        system: yes
+        createhome: yes
+        home: "{{ app_dir }}"
+        group: "{{ app_group }}"
+
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      with_items:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/config"
+        - "{{ app_dir }}/uploads"
+        - "{{ app_dir }}/logs"
+
+    - name: Clone application repository
+      git:
+        repo: "{{ repository_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+      become_user: "{{ app_user }}"
+
+    - name: Create Python virtual environment
+      command:
+        cmd: "{{ python_version }} -m venv {{ venv_dir }}"
+        creates: "{{ venv_dir }}"
+      become_user: "{{ app_user }}"
+
+    - name: Install Python dependencies
+      pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ app_user }}"
+
+    - name: Install Gunicorn
+      pip:
+        name: gunicorn
+        virtualenv: "{{ venv_dir }}"
+      become_user: "{{ app_user }}"
+
+    - name: Create production configuration
+      template:
+        src: templates/production.py.j2
+        dest: "{{ app_dir }}/config/production.py"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+
+    - name: Create systemd service file
+      template:
+        src: templates/pdf-extractor.service.j2
+        dest: /etc/systemd/system/pdf-extractor.service
+        mode: '0644'
+
+    - name: Create Nginx configuration
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/pdf-extractor
+        mode: '0644'
+
+    - name: Enable Nginx site
+      file:
+        src: /etc/nginx/sites-available/pdf-extractor
+        dest: /etc/nginx/sites-enabled/pdf-extractor
+        state: link
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Start and enable services
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+      with_items:
+        - pdf-extractor
+        - nginx 

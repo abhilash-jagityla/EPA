@@ -1,0 +1,15 @@
+[Unit]
+Description=PDF Extractor Application
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_dir }}
+Environment="FLASK_APP=app.py"
+Environment="FLASK_ENV=production"
+ExecStart={{ venv_dir }}/bin/gunicorn --workers 3 --bind unix:{{ app_dir }}/pdf_extractor.sock -m 007 app:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target 

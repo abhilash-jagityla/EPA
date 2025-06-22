@@ -1,0 +1,16 @@
+import os
+from datetime import timedelta
+
+class Config:
+    # Production settings
+    SECRET_KEY = '{{ secret_key }}'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{{ app_dir }}/app.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Security settings
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    
+    # Upload settings
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    UPLOAD_FOLDER = os.path.join('{{ app_dir }}', 'uploads') 
