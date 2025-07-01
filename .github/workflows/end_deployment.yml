@@ -32,10 +32,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install dependencies
-        run:  
+        run: |
           pip install -r requirements.txt
+
+      - name: Update code
+        run: |
           cd /home/webapps/pdf-extractor
           git pull --no-rebase
+
       - name: Restart app
         run: sudo supervisorctl restart pdf-extractor
