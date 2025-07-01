@@ -33,7 +33,7 @@ sudo usermod -aG sudo webapps
 1. Switch to the webapps user and clone the repository:
 ```bash
 sudo su - webapps
-git clone <repository-url> /home/webapps/pdf-extractor
+
 cd /home/webapps/pdf-extractor
 ```
 

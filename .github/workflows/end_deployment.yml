@@ -35,5 +35,7 @@ jobs:
       - name: Install dependencies
         run:  
           pip install -r requirements.txt
+          cd /home/webapps/pdf-extractor
+          git pull --no-rebase
       - name: Restart app
         run: sudo supervisorctl restart pdf-extractor
