@@ -53,7 +53,7 @@ class TestPDFExtractor(unittest.TestCase):
     def test_dashboard_access(self):
         """Test dashboard access after login"""
         self._login()
-        response = self.app.get('/dashboardb')
+        response = self.app.get('/dashboard')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Upload PDFs', response.data)
 
